@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>School Timetable</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+        }
+        table {
+            border-collapse: collapse;
+            width: 100%;
+            margin-bottom: 40px;
+        }
+        th, td {
+            border: 1px solid black;
+            padding: 6px;
+            text-align: center;
+        }
+        th {
+            background-color: #f2f2f2;
+        }
+        h2 {
+            margin-top: 40px;
+        }
+        .download-btn {
+            padding: 8px 14px;
+            background-color: #2e86c1;
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+
+        <div class="header">
+        <h1>Timetable</h1>
+
+        <!-- Download button -->
+        <a
+            href="{% url 'download_all_timetables_pdf' %}"
+            class="download-btn"
+        >
+            Download Timetable (PDF)
+        </a>
+    </div>
+
+<h1>School Timetable</h1>
+
+{% for class_name, lessons in timetable.items %}
+    <h2>Class: {{ class_name }}</h2>
+
+    {% if lessons %}
+        <table>
+            <tr>
+                <th>Day</th>
+                <th>Time</th>
+                <th>Subject</th>
+                <th>Teacher</th>
+            </tr>
+
+            {% for lesson in lessons %}
+            <tr>
+                <td>{{ lesson.day }}</td>
+                <td>{{ lesson.time_slot.start_time }} – {{ lesson.time_slot.end_time }}</td>
+                <td>{{ lesson.subject.name }}</td>
+                <td>{{ lesson.teacher.name }}</td>
+            </tr>
+            {% endfor %}
+        </table>
+    {% else %}
+        <p>No lessons scheduled for this class.</p>
+    {% endif %}
+
+{% endfor %}
+
+</body>
+</html>

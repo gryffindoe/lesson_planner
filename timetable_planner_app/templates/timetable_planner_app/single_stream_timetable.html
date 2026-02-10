@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>{{ school_class }} Timetable</title>
+
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .download-btn {
+            padding: 8px 14px;
+            background-color: #2e86c1;
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+            font-weight: bold;
+        }
+
+        .download-btn:hover {
+            background-color: #1f618d;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="header">
+        <h1>Timetable for {{ school_class }}</h1>
+
+        <!-- Download button -->
+        <a
+            href="{% url 'download_timetable' school_class.id %}"
+            class="download-btn"
+        >
+            Download Timetable (PDF)
+        </a>
+    </div>
+
+    <hr>
+
+    <!-- Include reusable lessons table -->
+    {% include "timetable_planner_app/lessons_table.html" with lessons=lessons %}
+
+</body>
+</html>
+
+
+

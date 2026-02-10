@@ -1,0 +1,89 @@
+{% load timetable_extras %}
+
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>School Timetable</title>
+    <style>
+        table {
+            border-collapse: collapse;
+            width: 100%;
+        }
+
+        th,
+        td {
+            border: 1px solid black;
+            padding: 8px;
+            text-align: center;
+        }
+
+        th {
+            background-color: #f0f0f0;
+        }
+
+        .time {
+            font-weight: bold;
+            background-color: #fafafa;
+        }
+
+        .lesson {
+            color: white;
+            font-weight: bold;
+            border-radius: 4px;
+            padding: 4px;
+            text-align: center;
+        }
+    </style>
+</head>
+
+<body>
+
+    <h1>School Timetable</h1>
+
+    {% for class_name, grid in timetable.items %}
+    <h2>{{ class_name }}</h2>
+
+    <table>
+        <tr>
+            <th>Time</th>
+            {% for day in days %}
+            <th>{{ day }}</th>
+            {% endfor %}
+        </tr>
+
+        {% for slot, slot_info in grid.items %}
+        <tr>
+            <td class="time">{{ slot.0 }} – {{ slot.1 }}</td>
+
+            {% for day in days %}
+            {% with lesson=slot_info.day_map|get_item:day %}
+            {% if lesson %}
+            <td>
+                <div class="lesson" style="background-color: {{ lesson.subject.color }};">
+                    {{ lesson.subject.name }}<br>
+                    <small>{{ lesson.teacher.name }}</small>
+                </div>
+            </td>
+            {% else %}
+            {% if slot_info.is_break %}
+            <td style="background-color: #d3d3d3; font-weight:bold;">Break</td>
+            {% elif slot_info.is_lunch %}
+            <td style="background-color: #fffacd; font-weight:bold;">Lunch</td>
+            {% elif slot_info.is_assembly and day == "Wednesday" %}
+            <td style="background-color: #add8e6; font-weight:bold;">Assembly</td>
+            {% else %}
+            <td>—</td>
+            {% endif %}
+            {% endif %}
+            {% endwith %}
+            {% endfor %}
+        </tr>
+        {% endfor %}
+
+    </table>
+    {% endfor %}
+
+</body>
+
+</html>

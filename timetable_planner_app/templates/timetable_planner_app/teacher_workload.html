@@ -1,0 +1,25 @@
+<h2>Teacher Workload – {{ term }}</h2>
+
+<table border="1" cellpadding="8">
+    <tr>
+        <th>Teacher</th>
+        <th>Periods per Week</th>
+        <th>Status</th>
+    </tr>
+
+    {% for row in workload %}
+    <tr>
+        <td>{{ row.teacher__name }}</td>
+        <td>{{ row.periods }}</td>
+        <td>
+            {% if row.periods > 28 %}
+                <span style="color:red;">Overloaded</span>
+            {% elif row.periods < 15 %}
+                <span style="color:orange;">Underloaded</span>
+            {% else %}
+                <span style="color:green;">Balanced</span>
+            {% endif %}
+        </td>
+    </tr>
+    {% endfor %}
+</table>
