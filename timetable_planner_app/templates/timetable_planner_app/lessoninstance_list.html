@@ -1,0 +1,32 @@
+{% extends 'timetable_planner_app/base.html' %}
+{% block title %}Manual Lessons{% endblock %}
+{% block content %}
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <h2 class="mb-0">Manual Lesson Instances</h2>
+    <a class="btn btn-sm btn-primary" href="{% url 'lessoninstance_add' %}">Add</a>
+  </div>
+
+  {% if lessons %}
+    <table class="table table-sm table-striped">
+      <thead>
+        <tr><th>Class</th><th>Subject</th><th>Teacher</th><th>When</th><th></th></tr>
+      </thead>
+      <tbody>
+        {% for l in lessons %}
+          <tr>
+            <td>{{ l.school_class }}</td>
+            <td>{{ l.subject }}</td>
+            <td>{{ l.teacher }}</td>
+            <td>{{ l.day }} {{ l.time_slot }}</td>
+            <td class="text-end">
+              <a class="btn btn-sm btn-outline-primary" href="{% url 'lessoninstance_edit' l.pk %}">Edit</a>
+              <a class="btn btn-sm btn-outline-danger" href="{% url 'lessoninstance_delete' l.pk %}">Delete</a>
+            </td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  {% else %}
+    <div class="alert alert-info">No manual lessons yet.</div>
+  {% endif %}
+{% endblock %}

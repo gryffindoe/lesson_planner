@@ -1,0 +1,11 @@
+{% extends 'timetable_planner_app/base.html' %}
+{% block content %}
+  <h1>Classes <a href="{% url 'class_add' %}">[Add]</a></h1>
+  <ul>
+    {% for c in classes %}
+      <li>{{ c }} — <a href="{% url 'class_edit' c.pk %}">Edit</a> | <a href="{% url 'class_delete' c.pk %}">Delete</a></li>
+    {% empty %}
+      <li>No classes yet.</li>
+    {% endfor %}
+  </ul>
+{% endblock %}

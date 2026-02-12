@@ -1,0 +1,6 @@
+{% extends 'timetable_planner_app/base.html' %}
+{% block content %}
+  <h1>Delete Academic Term</h1>
+  <p>Delete {{ object }}?</p>
+  <form method="post">{% csrf_token %}<button type="submit">Confirm</button></form>
+{% endblock %}
