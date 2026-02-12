@@ -1,5 +1,8 @@
 
 from django.shortcuts import render, redirect
+from django.contrib.auth import login, authenticate
+from django.contrib.auth.decorators import login_required
+from .forms import SignUpForm
 from datetime import time
 from .models import Lesson, LessonInstance, SchoolClass, TimeSlot, AcademicTerm
 from .utils import generate_timetable, teacher_workload
@@ -16,6 +19,23 @@ from django.http import JsonResponse
 
 def home(request):
     return render(request, "timetable_planner_app/home.html")
+
+
+def signup(request):
+    if request.method == 'POST':
+        form = SignUpForm(request.POST)
+        if form.is_valid():
+            user = form.save()
+            username = form.cleaned_data.get('username')
+            raw_password = form.cleaned_data.get('password1')
+            user = authenticate(username=username, password=raw_password)
+            if user:
+                login(request, user)
+                return redirect('view_timetable')
+    else:
+        form = SignUpForm()
+
+    return render(request, 'registration/signup.html', {'form': form})
 
 def generate(request, term_id):
     term = AcademicTerm.objects.order_by("-year", "-term").first()
@@ -76,6 +96,7 @@ TIME_SLOTS = [
 DAYS = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"]
 
 
+@login_required
 def view_grid_timetable(request):
     print(request.user.userprofile)
     school = request.user.userprofile.school
@@ -113,6 +134,9 @@ def view_grid_timetable(request):
         "time_slots": TIME_SLOTS
     }
     return render(request, "timetable_planner_app/grid.html", context)
+
+
+@login_required
 
 
 def download_timetable_pdf(request, class_id):
@@ -235,6 +259,7 @@ ASSEMBLY_COLOR = colors.lightcyan
 BREAK_COLOR = colors.lightyellow
 LUNCH_COLOR = colors.lightpink
 
+@login_required
 def download_all_timetables_pdf(request):
     school = request.user.userprofile.school
     response = HttpResponse(content_type="application/pdf")
