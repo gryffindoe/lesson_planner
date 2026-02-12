@@ -1,0 +1,31 @@
+{% extends 'timetable_planner_app/base.html' %}
+{% block title %}Subject Offerings{% endblock %}
+{% block content %}
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <h2 class="mb-0">Subject offerings</h2>
+    <a class="btn btn-sm btn-primary" href="{% url 'subjectoffering_add' %}">Add</a>
+  </div>
+
+  {% if offerings %}
+    <table class="table table-sm table-striped">
+      <thead>
+        <tr><th>Subject</th><th>Class Level</th><th>Periods/week</th><th></th></tr>
+      </thead>
+      <tbody>
+        {% for o in offerings %}
+          <tr>
+            <td>{{ o.subject }}</td>
+            <td>{{ o.class_level }}</td>
+            <td>{{ o.periods_per_week }}</td>
+            <td class="text-end">
+              <a class="btn btn-sm btn-outline-primary" href="{% url 'subjectoffering_edit' o.pk %}">Edit</a>
+              <a class="btn btn-sm btn-outline-danger" href="{% url 'subjectoffering_delete' o.pk %}">Delete</a>
+            </td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  {% else %}
+    <div class="alert alert-info">No offerings yet.</div>
+  {% endif %}
+{% endblock %}

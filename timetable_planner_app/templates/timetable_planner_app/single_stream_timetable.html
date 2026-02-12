@@ -1,55 +1,24 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <title>{{ school_class }} Timetable</title>
+{% extends 'timetable_planner_app/base.html' %}
 
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-        }
+{% block title %}Timetable for {{ school_class }}{% endblock %}
+{% block page_header %}Timetable for {{ school_class }}{% endblock %}
 
-        .header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
+{% block head %}
+<style>
+  .download-btn { margin-left: 8px; }
+</style>
+{% endblock %}
 
-        .download-btn {
-            padding: 8px 14px;
-            background-color: #2e86c1;
-            color: white;
-            text-decoration: none;
-            border-radius: 5px;
-            font-weight: bold;
-        }
+{% block content %}
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <h3 class="mb-0">Timetable for {{ school_class }}</h3>
+    <a class="btn btn-outline-secondary" href="{% url 'download_timetable' school_class.id %}">Download Timetable (PDF)</a>
+  </div>
 
-        .download-btn:hover {
-            background-color: #1f618d;
-        }
-    </style>
-</head>
+  <hr>
 
-<body>
-
-    <div class="header">
-        <h1>Timetable for {{ school_class }}</h1>
-
-        <!-- Download button -->
-        <a
-            href="{% url 'download_timetable' school_class.id %}"
-            class="download-btn"
-        >
-            Download Timetable (PDF)
-        </a>
-    </div>
-
-    <hr>
-
-    <!-- Include reusable lessons table -->
-    {% include "timetable_planner_app/lessons_table.html" with lessons=lessons %}
-
-</body>
-</html>
+  {% include "timetable_planner_app/lessons_table.html" with lessons=lessons %}
+{% endblock %}
 
 
 

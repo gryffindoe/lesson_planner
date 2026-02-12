@@ -1,0 +1,29 @@
+{% extends 'timetable_planner_app/base.html' %}
+{% block title %}Subjects{% endblock %}
+{% block content %}
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <h2 class="mb-0">Subjects</h2>
+    <a class="btn btn-sm btn-primary" href="{% url 'subject_add' %}">Add</a>
+  </div>
+
+  {% if subjects %}
+    <table class="table table-striped">
+      <thead>
+        <tr><th>Name</th><th></th></tr>
+      </thead>
+      <tbody>
+        {% for s in subjects %}
+          <tr>
+            <td>{{ s.name }}</td>
+            <td class="text-end">
+              <a class="btn btn-sm btn-outline-primary" href="{% url 'subject_edit' s.pk %}">Edit</a>
+              <a class="btn btn-sm btn-outline-danger" href="{% url 'subject_delete' s.pk %}">Delete</a>
+            </td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  {% else %}
+    <div class="alert alert-info">No subjects yet.</div>
+  {% endif %}
+{% endblock %}

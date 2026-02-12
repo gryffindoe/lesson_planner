@@ -1,33 +1,26 @@
 {% if lessons %}
-<table border="1" cellpadding="6" cellspacing="0" width="100%">
-    <thead>
-        <tr style="background-color: #f0f0f0;">
-            <th>Day</th>
-            <th>Time</th>
-            <th>Subject</th>
-            <th>Teacher</th>
-        </tr>
-    </thead>
-
-    <tbody>
-        {% for lesson in lessons %}
-        <tr>
-            <td>{{ lesson.day }}</td>
-
-            <td>
-                {{ lesson.time_slot.start_time }}
-                –
-                {{ lesson.time_slot.end_time }}
-            </td>
-
-            <td>{{ lesson.subject.name }}</td>
-
-            <td>{{ lesson.teacher.name }}</td>
-        </tr>
-        {% endfor %}
-    </tbody>
-</table>
-
+    <div class="table-responsive">
+        <table class="table table-bordered table-sm">
+            <thead class="table-light">
+                <tr>
+                    <th>Day</th>
+                    <th>Time</th>
+                    <th>Subject</th>
+                    <th>Teacher</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for lesson in lessons %}
+                    <tr>
+                        <td>{{ lesson.day }}</td>
+                        <td>{{ lesson.time_slot.start_time }} – {{ lesson.time_slot.end_time }}</td>
+                        <td>{{ lesson.subject.name }}</td>
+                        <td>{{ lesson.teacher.name }}</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
 {% else %}
-<p><em>No lessons available for this class.</em></p>
+    <div class="alert alert-info"><em>No lessons available for this class.</em></div>
 {% endif %}

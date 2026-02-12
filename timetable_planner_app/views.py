@@ -1,25 +1,33 @@
 
-from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import login, authenticate
 from django.contrib.auth.decorators import login_required
-from .forms import SignUpForm
 from datetime import time
-from .models import Lesson, LessonInstance, SchoolClass, TimeSlot, AcademicTerm
+from .models import (
+    Lesson, LessonInstance, SchoolClass, TimeSlot,
+    AcademicTerm, Teacher, Subject, SubjectOffering
+)
+from .forms import SignUpForm
 from .utils import generate_timetable, teacher_workload
-from django.shortcuts import get_object_or_404
-from django.http import HttpResponse
+from django.http import HttpResponse, JsonResponse
 from reportlab.lib.pagesizes import A4, landscape
 from reportlab.pdfgen import canvas
 from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Spacer, Paragraph, PageBreak
 from reportlab.lib.styles import getSampleStyleSheet
 from reportlab.lib import colors
-from django.http import JsonResponse
+
+from django.urls import reverse_lazy
+from django.views.generic import ListView, CreateView, UpdateView, DeleteView
+from django.contrib.auth.mixins import LoginRequiredMixin
+from django.contrib.auth.decorators import login_required
+from django.contrib import messages
+from django.core.management import call_command
+from django.forms import ModelForm
 
 
 
 def home(request):
     return render(request, "timetable_planner_app/home.html")
-
 
 def signup(request):
     if request.method == 'POST':
@@ -37,6 +45,31 @@ def signup(request):
 
     return render(request, 'registration/signup.html', {'form': form})
 
+
+@login_required
+def dashboard(request):
+    """Simple dashboard that links to CRUD pages and offers generate action."""
+    if request.method == 'POST':
+        action = request.POST.get('action')
+        try:
+            if action == 'generate':
+                term_id = request.POST.get('term')
+                term = AcademicTerm.objects.filter(id=term_id).first() if term_id else AcademicTerm.objects.order_by("-year","-term").first()
+                clear = request.POST.get('clear') in ('1','on','true')
+                generate_timetable(term=term, clear_existing=clear)
+                messages.success(request, 'Timetable generated successfully.')
+            elif action == 'create_timeslots':
+                call_command('create_timeslots')
+                messages.success(request, 'Default time slots created.')
+            else:
+                messages.error(request, 'Unknown action')
+        except Exception as e:
+            messages.error(request, f'Action failed: {e}')
+        return redirect('dashboard')
+
+    terms = AcademicTerm.objects.order_by('-year','-term')
+    return render(request, 'timetable_planner_app/dashboard.html', {'terms': terms})
+
 def generate(request, term_id):
     term = AcademicTerm.objects.order_by("-year", "-term").first()
 
@@ -48,17 +81,16 @@ def generate(request, term_id):
     return redirect("view_timetable")
 
 def view_timetable(request):
-    classes = SchoolClass.objects.all()
-    timetable = {}
-    for cls in classes:
-        timetable[cls.__str__()] = LessonInstance.objects.filter(
-            school_class=cls
-        ).order_by("day", "time_slot__start_time")
-    return render(request, "timetable_planner_app/timetable.html", {"timetable": timetable})
+    # Redirect legacy timetable view to the more user-friendly grid view
+    return redirect('view_grid_timetable')
 
 
 def view_single_stream_timetable(request, class_id):
-    school_class = get_object_or_404(SchoolClass, id=class_id)
+    if request.user.is_authenticated:
+        school = request.user.userprofile.school
+        school_class = get_object_or_404(SchoolClass, id=class_id, school=school)
+    else:
+        school_class = get_object_or_404(SchoolClass, id=class_id)
 
     lessons = LessonInstance.objects.filter(
         school_class=school_class
@@ -75,6 +107,281 @@ def view_single_stream_timetable(request, class_id):
             "lessons": lessons
         }
     )
+
+
+# -----------------------------
+# Generic CRUD views
+# -----------------------------
+
+
+class TeacherListView(LoginRequiredMixin, ListView):
+    model = Teacher
+    template_name = 'timetable_planner_app/teacher_list.html'
+    context_object_name = 'teachers'
+    def get_queryset(self):
+        school = self.request.user.userprofile.school
+        return Teacher.objects.filter(school=school)
+
+
+class TeacherCreateView(LoginRequiredMixin, CreateView):
+    model = Teacher
+    fields = ['name']
+    template_name = 'timetable_planner_app/teacher_form.html'
+    success_url = reverse_lazy('teacher_list')
+
+    def form_valid(self, form):
+        obj = form.save(commit=False)
+        obj.school = self.request.user.userprofile.school
+        obj.save()
+        return super().form_valid(form)
+
+
+class TeacherUpdateView(LoginRequiredMixin, UpdateView):
+    model = Teacher
+    fields = ['name']
+    template_name = 'timetable_planner_app/teacher_form.html'
+    success_url = reverse_lazy('teacher_list')
+    def get_queryset(self):
+        school = self.request.user.userprofile.school
+        return Teacher.objects.filter(school=school)
+
+
+class TeacherDeleteView(LoginRequiredMixin, DeleteView):
+    model = Teacher
+    template_name = 'timetable_planner_app/teacher_confirm_delete.html'
+    success_url = reverse_lazy('teacher_list')
+    def get_queryset(self):
+        school = self.request.user.userprofile.school
+        return Teacher.objects.filter(school=school)
+
+
+class SubjectListView(LoginRequiredMixin, ListView):
+    model = Subject
+    template_name = 'timetable_planner_app/subject_list.html'
+    context_object_name = 'subjects'
+    def get_queryset(self):
+        school = self.request.user.userprofile.school
+        return Subject.objects.filter(levels__school=school).distinct()
+
+
+class SubjectCreateView(LoginRequiredMixin, CreateView):
+    model = Subject
+    fields = ['name', 'levels', 'teachers', 'elective_group', 'color']
+    template_name = 'timetable_planner_app/subject_form.html'
+    success_url = reverse_lazy('subject_list')
+    def get_form(self, form_class=None):
+        form = super().get_form(form_class)
+        school = self.request.user.userprofile.school
+        # limit selectable levels and teachers to this school
+        form.fields['levels'].queryset = SchoolClass.objects.filter(school=school)
+        form.fields['teachers'].queryset = Teacher.objects.filter(school=school)
+        return form
+
+
+class SubjectUpdateView(LoginRequiredMixin, UpdateView):
+    model = Subject
+    fields = ['name', 'levels', 'teachers', 'elective_group', 'color']
+    template_name = 'timetable_planner_app/subject_form.html'
+    success_url = reverse_lazy('subject_list')
+    def get_queryset(self):
+        school = self.request.user.userprofile.school
+        return Subject.objects.filter(levels__school=school).distinct()
+
+    def get_form(self, form_class=None):
+        form = super().get_form(form_class)
+        school = self.request.user.userprofile.school
+        form.fields['levels'].queryset = SchoolClass.objects.filter(school=school)
+        form.fields['teachers'].queryset = Teacher.objects.filter(school=school)
+        return form
+
+
+class SubjectDeleteView(LoginRequiredMixin, DeleteView):
+    model = Subject
+    template_name = 'timetable_planner_app/subject_confirm_delete.html'
+    success_url = reverse_lazy('subject_list')
+    def get_queryset(self):
+        school = self.request.user.userprofile.school
+        return Subject.objects.filter(levels__school=school).distinct()
+
+
+class TimeSlotListView(LoginRequiredMixin, ListView):
+    model = TimeSlot
+    template_name = 'timetable_planner_app/timeslot_list.html'
+    context_object_name = 'timeslots'
+
+
+class TimeSlotCreateView(LoginRequiredMixin, CreateView):
+    model = TimeSlot
+    fields = ['name', 'start_time', 'end_time', 'is_break', 'is_lunch', 'is_assembly']
+    template_name = 'timetable_planner_app/timeslot_form.html'
+    success_url = reverse_lazy('timeslot_list')
+
+
+class TimeSlotUpdateView(LoginRequiredMixin, UpdateView):
+    model = TimeSlot
+    fields = ['name', 'start_time', 'end_time', 'is_break', 'is_lunch', 'is_assembly']
+    template_name = 'timetable_planner_app/timeslot_form.html'
+    success_url = reverse_lazy('timeslot_list')
+
+
+class TimeSlotDeleteView(LoginRequiredMixin, DeleteView):
+    model = TimeSlot
+    template_name = 'timetable_planner_app/timeslot_confirm_delete.html'
+    success_url = reverse_lazy('timeslot_list')
+
+
+class SubjectOfferingListView(LoginRequiredMixin, ListView):
+    model = SubjectOffering
+    template_name = 'timetable_planner_app/subjectoffering_list.html'
+    context_object_name = 'offerings'
+    def get_queryset(self):
+        school = self.request.user.userprofile.school
+        return SubjectOffering.objects.filter(subject__levels__school=school).distinct()
+
+
+class SubjectOfferingCreateView(LoginRequiredMixin, CreateView):
+    model = SubjectOffering
+    fields = ['subject', 'class_level', 'periods_per_week']
+    template_name = 'timetable_planner_app/subjectoffering_form.html'
+    success_url = reverse_lazy('subjectoffering_list')
+    def get_form(self, form_class=None):
+        form = super().get_form(form_class)
+        school = self.request.user.userprofile.school
+        form.fields['subject'].queryset = Subject.objects.filter(levels__school=school).distinct()
+        return form
+
+
+class SubjectOfferingUpdateView(LoginRequiredMixin, UpdateView):
+    model = SubjectOffering
+    fields = ['subject', 'class_level', 'periods_per_week']
+    template_name = 'timetable_planner_app/subjectoffering_form.html'
+    success_url = reverse_lazy('subjectoffering_list')
+
+
+class SubjectOfferingDeleteView(LoginRequiredMixin, DeleteView):
+    model = SubjectOffering
+    template_name = 'timetable_planner_app/subjectoffering_confirm_delete.html'
+    success_url = reverse_lazy('subjectoffering_list')
+
+
+class SchoolClassListView(LoginRequiredMixin, ListView):
+    model = SchoolClass
+    template_name = 'timetable_planner_app/schoolclass_list.html'
+    context_object_name = 'classes'
+    def get_queryset(self):
+        school = self.request.user.userprofile.school
+        return SchoolClass.objects.filter(school=school)
+
+
+class SchoolClassCreateView(LoginRequiredMixin, CreateView):
+    model = SchoolClass
+    fields = ['level', 'stream']
+    template_name = 'timetable_planner_app/schoolclass_form.html'
+    success_url = reverse_lazy('class_list')
+    def form_valid(self, form):
+        obj = form.save(commit=False)
+        obj.school = self.request.user.userprofile.school
+        obj.save()
+        return super().form_valid(form)
+
+
+class SchoolClassUpdateView(LoginRequiredMixin, UpdateView):
+    model = SchoolClass
+    fields = ['level', 'stream']
+    template_name = 'timetable_planner_app/schoolclass_form.html'
+    success_url = reverse_lazy('class_list')
+    def get_queryset(self):
+        school = self.request.user.userprofile.school
+        return SchoolClass.objects.filter(school=school)
+
+
+class SchoolClassDeleteView(LoginRequiredMixin, DeleteView):
+    model = SchoolClass
+    template_name = 'timetable_planner_app/schoolclass_confirm_delete.html'
+    success_url = reverse_lazy('class_list')
+    def get_queryset(self):
+        school = self.request.user.userprofile.school
+        return SchoolClass.objects.filter(school=school)
+
+
+class AcademicTermListView(LoginRequiredMixin, ListView):
+    model = AcademicTerm
+    template_name = 'timetable_planner_app/term_list.html'
+    context_object_name = 'terms'
+
+
+class AcademicTermCreateView(LoginRequiredMixin, CreateView):
+    model = AcademicTerm
+    fields = ['year', 'term', 'start_date', 'end_date']
+    template_name = 'timetable_planner_app/term_form.html'
+    success_url = reverse_lazy('term_list')
+
+
+class AcademicTermUpdateView(LoginRequiredMixin, UpdateView):
+    model = AcademicTerm
+    fields = ['year', 'term', 'start_date', 'end_date']
+    template_name = 'timetable_planner_app/term_form.html'
+    success_url = reverse_lazy('term_list')
+
+
+class AcademicTermDeleteView(LoginRequiredMixin, DeleteView):
+    model = AcademicTerm
+    template_name = 'timetable_planner_app/term_confirm_delete.html'
+    success_url = reverse_lazy('term_list')
+
+
+class LessonInstanceListView(LoginRequiredMixin, ListView):
+    model = LessonInstance
+    template_name = 'timetable_planner_app/lessoninstance_list.html'
+    context_object_name = 'lessons'
+    def get_queryset(self):
+        school = self.request.user.userprofile.school
+        return LessonInstance.objects.filter(school_class__school=school)
+
+
+class LessonInstanceCreateView(LoginRequiredMixin, CreateView):
+    model = LessonInstance
+    fields = ['school_class', 'subject', 'teacher', 'term', 'day', 'time_slot']
+    template_name = 'timetable_planner_app/lessoninstance_form.html'
+    success_url = reverse_lazy('lessoninstance_list')
+    def get_form(self, form_class=None):
+        form = super().get_form(form_class)
+        school = self.request.user.userprofile.school
+        form.fields['school_class'].queryset = SchoolClass.objects.filter(school=school)
+        form.fields['teacher'].queryset = Teacher.objects.filter(school=school)
+        form.fields['subject'].queryset = Subject.objects.filter(levels__school=school).distinct()
+        return form
+
+    def get_queryset(self):
+        school = self.request.user.userprofile.school
+        return LessonInstance.objects.filter(school_class__school=school)
+
+
+class LessonInstanceUpdateView(LoginRequiredMixin, UpdateView):
+    model = LessonInstance
+    fields = ['school_class', 'subject', 'teacher', 'term', 'day', 'time_slot']
+    template_name = 'timetable_planner_app/lessoninstance_form.html'
+    success_url = reverse_lazy('lessoninstance_list')
+    def get_queryset(self):
+        school = self.request.user.userprofile.school
+        return LessonInstance.objects.filter(school_class__school=school)
+
+    def get_form(self, form_class=None):
+        form = super().get_form(form_class)
+        school = self.request.user.userprofile.school
+        form.fields['school_class'].queryset = SchoolClass.objects.filter(school=school)
+        form.fields['teacher'].queryset = Teacher.objects.filter(school=school)
+        form.fields['subject'].queryset = Subject.objects.filter(levels__school=school).distinct()
+        return form
+
+
+class LessonInstanceDeleteView(LoginRequiredMixin, DeleteView):
+    model = LessonInstance
+    template_name = 'timetable_planner_app/lessoninstance_confirm_delete.html'
+    success_url = reverse_lazy('lessoninstance_list')
+    def get_queryset(self):
+        school = self.request.user.userprofile.school
+        return LessonInstance.objects.filter(school_class__school=school)
 
 
 TIME_SLOTS = [
@@ -137,10 +444,9 @@ def view_grid_timetable(request):
 
 
 @login_required
-
-
 def download_timetable_pdf(request, class_id):
-    school_class = SchoolClass.objects.get(id=class_id)
+    school = request.user.userprofile.school
+    school_class = get_object_or_404(SchoolClass, id=class_id, school=school)
 
     lessons = LessonInstance.objects.filter(
         school_class=school_class

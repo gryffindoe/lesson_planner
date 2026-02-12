@@ -1,19 +1,19 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <title>School Timetable</title>
-</head>
-<body>
-    <h1>Welcome to Timetable Planner</h1>
+{% extends 'timetable_planner_app/base.html' %}
 
-    {% if user.is_authenticated %}
-        <p>Hello {{ user.username }} — <a href="{% url 'logout' %}">Logout</a></p>
-    {% else %}
-        <p><a href="{% url 'login' %}">Login</a> | <a href="{% url 'signup' %}">Sign up</a></p>
-    {% endif %}
+{% block title %}Welcome{% endblock %}
 
-    <a href="{% url 'generate_timetable' %}">Generate Timetable</a><br>
-    <a href="{% url 'view_timetable' %}">View Timetable</a><br>
-    <a href="{%url 'view_grid_timetable'%}">Grid Timetable</a>
-</body>
-</html>
+{% block content %}
+    <div class="p-4 bg-light rounded">
+        <h2>Welcome to Timetable Planner</h2>
+
+        {% if user.is_authenticated %}
+            <p>Hello {{ user.username }} — <a href="{% url 'logout' %}">Logout</a></p>
+            <p><a class="btn btn-primary" href="{% url 'view_grid_timetable' %}">Open Grid Timetable</a>
+                 <a class="btn btn-secondary" href="{% url 'dashboard' %}">Go to Dashboard</a></p>
+        {% else %}
+            <p><a class="btn btn-primary" href="{% url 'login' %}">Login</a>
+                 <a class="btn btn-outline-primary" href="{% url 'signup' %}">Sign up</a></p>
+        {% endif %}
+    </div>
+
+{% endblock %}

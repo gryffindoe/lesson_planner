@@ -1,0 +1,17 @@
+{% extends 'timetable_planner_app/base.html' %}
+{% block title %}{% if form.instance.pk %}Edit{% else %}Add{% endif %} Teacher{% endblock %}
+{% block content %}
+  <div class="card">
+    <div class="card-body">
+      <h3 class="card-title">{% if form.instance.pk %}Edit{% else %}Add{% endif %} Teacher</h3>
+      <form method="post">
+        {% csrf_token %}
+        <div class="mb-3">{{ form.as_p }}</div>
+        <div class="form-actions">
+          <button class="btn btn-primary" type="submit">Save</button>
+          <a class="btn btn-link" href="{% url 'teacher_list' %}">Cancel</a>
+        </div>
+      </form>
+    </div>
+  </div>
+{% endblock %}

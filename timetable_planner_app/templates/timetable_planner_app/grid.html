@@ -1,89 +1,63 @@
+{% extends 'timetable_planner_app/base.html' %}
 {% load timetable_extras %}
 
-<!DOCTYPE html>
-<html>
+{% block title %}Grid Timetable{% endblock %}
+{% block page_header %}Grid Timetable{% endblock %}
 
-<head>
-    <title>School Timetable</title>
-    <style>
-        table {
-            border-collapse: collapse;
-            width: 100%;
-        }
+{% block head %}
+<style>
+    table { border-collapse: collapse; width: 100%; }
+    th, td { border: 1px solid #dee2e6; padding: 8px; text-align: center; }
+    .time { font-weight: bold; background-color: #fafafa; }
+    .lesson { color: white; font-weight: bold; border-radius: 4px; padding: 4px; text-align: center; }
+</style>
+{% endblock %}
 
-        th,
-        td {
-            border: 1px solid black;
-            padding: 8px;
-            text-align: center;
-        }
-
-        th {
-            background-color: #f0f0f0;
-        }
-
-        .time {
-            font-weight: bold;
-            background-color: #fafafa;
-        }
-
-        .lesson {
-            color: white;
-            font-weight: bold;
-            border-radius: 4px;
-            padding: 4px;
-            text-align: center;
-        }
-    </style>
-</head>
-
-<body>
-
-    <h1>School Timetable</h1>
-
+{% block content %}
     {% for class_name, grid in timetable.items %}
-    <h2>{{ class_name }}</h2>
-
-    <table>
-        <tr>
-            <th>Time</th>
-            {% for day in days %}
-            <th>{{ day }}</th>
-            {% endfor %}
-        </tr>
-
-        {% for slot, slot_info in grid.items %}
-        <tr>
-            <td class="time">{{ slot.0 }} – {{ slot.1 }}</td>
-
-            {% for day in days %}
-            {% with lesson=slot_info.day_map|get_item:day %}
-            {% if lesson %}
-            <td>
-                <div class="lesson" style="background-color: {{ lesson.subject.color }};">
-                    {{ lesson.subject.name }}<br>
-                    <small>{{ lesson.teacher.name }}</small>
-                </div>
-            </td>
-            {% else %}
-            {% if slot_info.is_break %}
-            <td style="background-color: #d3d3d3; font-weight:bold;">Break</td>
-            {% elif slot_info.is_lunch %}
-            <td style="background-color: #fffacd; font-weight:bold;">Lunch</td>
-            {% elif slot_info.is_assembly and day == "Wednesday" %}
-            <td style="background-color: #add8e6; font-weight:bold;">Assembly</td>
-            {% else %}
-            <td>—</td>
-            {% endif %}
-            {% endif %}
-            {% endwith %}
-            {% endfor %}
-        </tr>
-        {% endfor %}
-
-    </table>
+        <div class="mb-4">
+            <h4>{{ class_name }}</h4>
+            <div class="table-responsive">
+                <table class="table table-bordered table-sm">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Time</th>
+                            {% for day in days %}
+                                <th>{{ day }}</th>
+                            {% endfor %}
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for slot, slot_info in grid.items %}
+                            <tr>
+                                <td class="time">{{ slot.0 }} – {{ slot.1 }}</td>
+                                {% for day in days %}
+                                    {% with lesson=slot_info.day_map|get_item:day %}
+                                        {% if lesson %}
+                                            <td>
+                                                <div class="lesson" style="background-color: {{ lesson.subject.color }};">
+                                                    {{ lesson.subject.name }}<br>
+                                                    <small>{{ lesson.teacher.name }}</small>
+                                                </div>
+                                            </td>
+                                        {% else %}
+                                            {% if slot_info.is_break %}
+                                                <td class="table-secondary text-center"><strong>Break</strong></td>
+                                            {% elif slot_info.is_lunch %}
+                                                <td class="table-warning text-center"><strong>Lunch</strong></td>
+                                            {% elif slot_info.is_assembly and day == "Wednesday" %}
+                                                <td class="table-info text-center"><strong>Assembly</strong></td>
+                                            {% else %}
+                                                <td class="text-center">—</td>
+                                            {% endif %}
+                                        {% endif %}
+                                    {% endwith %}
+                                {% endfor %}
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
     {% endfor %}
-
-</body>
-
-</html>
+{% endblock %}
