@@ -5,6 +5,13 @@
 </head>
 <body>
     <h1>Welcome to Timetable Planner</h1>
+
+    {% if user.is_authenticated %}
+        <p>Hello {{ user.username }} — <a href="{% url 'logout' %}">Logout</a></p>
+    {% else %}
+        <p><a href="{% url 'login' %}">Login</a> | <a href="{% url 'signup' %}">Sign up</a></p>
+    {% endif %}
+
     <a href="{% url 'generate_timetable' %}">Generate Timetable</a><br>
     <a href="{% url 'view_timetable' %}">View Timetable</a><br>
     <a href="{%url 'view_grid_timetable'%}">Grid Timetable</a>
