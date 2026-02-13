@@ -11,6 +11,7 @@ https://docs.djangoproject.com/en/3.2/ref/settings/
 """
 
 from pathlib import Path
+import os
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -22,10 +23,12 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = 'django-insecure-51n277^91jkk_4on8urjwm!moluvmi!@3hne_s*keiukur=lh='
 
-# SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+# Determine environment and debug
+ENV = os.getenv('DJANGO_ENV', os.getenv('ENV', 'development'))
+DEBUG = os.getenv('DEBUG', 'True').lower() in ('1', 'true', 'yes') if ENV != 'production' else os.getenv('DEBUG', 'False').lower() in ('1', 'true', 'yes')
 
-ALLOWED_HOSTS = []
+# Allow configuring allowed hosts via env var (comma separated) in production
+ALLOWED_HOSTS = [h for h in os.getenv('ALLOWED_HOSTS', '').split(',') if h] if ENV == 'production' else []
 
 
 # Application definition
@@ -74,12 +77,29 @@ WSGI_APPLICATION = 'timetable_planner.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/3.2/ref/settings/#databases
 
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+if ENV in ('production', 'prod') or os.getenv('DJANGO_PRODUCTION', '').lower() in ('1', 'true', 'yes'):
+    # Use MySQL in production (configure via environment variables)
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.mysql',
+            'NAME': os.getenv('MYSQL_DATABASE', 'timetable_planner'),
+            'USER': os.getenv('MYSQL_USER', 'root'),
+            'PASSWORD': os.getenv('MYSQL_PASSWORD', ''),
+            'HOST': os.getenv('MYSQL_HOST', 'localhost'),
+            'PORT': os.getenv('MYSQL_PORT', '3306'),
+            'OPTIONS': {
+                'init_command': "SET sql_mode='STRICT_TRANS_TABLES'",
+            },
+        }
     }
-}
+else:
+    # Default to SQLite for local development
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': BASE_DIR / 'db.sqlite3',
+        }
+    }
 
 
 # Password validation
@@ -119,6 +139,8 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/3.2/howto/static-files/
 
 STATIC_URL = '/static/'
+# Where `collectstatic` will place static files for serving in production
+STATIC_ROOT = BASE_DIR / 'staticfiles'
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/3.2/ref/settings/#default-auto-field

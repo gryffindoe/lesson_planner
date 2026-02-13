@@ -1,0 +1,13 @@
+__pycache__/
+*.pyc
+.venv
+venv/
+timetable_planner_venv/
+db.sqlite3
+.env
+.env.*
+.git
+node_modules/
+dist/
+build/
+*.log
