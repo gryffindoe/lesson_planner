@@ -23,11 +23,13 @@ from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.core.management import call_command
 from django.forms import ModelForm
+from django.contrib.auth import logout as auth_logout
 
 
 
 def home(request):
     return render(request, "timetable_planner_app/home.html")
+
 
 def signup(request):
     if request.method == 'POST':
