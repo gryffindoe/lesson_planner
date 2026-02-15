@@ -79,17 +79,23 @@ WSGI_APPLICATION = 'timetable_planner.wsgi.application'
 
 if ENV in ('production', 'prod') or os.getenv('DJANGO_PRODUCTION', '').lower() in ('1', 'true', 'yes'):
     # Use MySQL in production (configure via environment variables)
+    # DATABASES = {
+    #     'default': {
+    #         'ENGINE': 'django.db.backends.mysql',
+    #         'NAME': os.getenv('MYSQL_DATABASE', 'timetable_planner'),
+    #         'USER': os.getenv('MYSQL_USER', 'root'),
+    #         'PASSWORD': os.getenv('MYSQL_PASSWORD', ''),
+    #         'HOST': os.getenv('MYSQL_HOST', 'localhost'),
+    #         'PORT': os.getenv('MYSQL_PORT', '3306'),
+    #         'OPTIONS': {
+    #             'init_command': "SET sql_mode='STRICT_TRANS_TABLES'",
+    #         },
+    #     }
+    # }
     DATABASES = {
         'default': {
-            'ENGINE': 'django.db.backends.mysql',
-            'NAME': os.getenv('MYSQL_DATABASE', 'timetable_planner'),
-            'USER': os.getenv('MYSQL_USER', 'root'),
-            'PASSWORD': os.getenv('MYSQL_PASSWORD', ''),
-            'HOST': os.getenv('MYSQL_HOST', 'localhost'),
-            'PORT': os.getenv('MYSQL_PORT', '3306'),
-            'OPTIONS': {
-                'init_command': "SET sql_mode='STRICT_TRANS_TABLES'",
-            },
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': BASE_DIR / 'db.sqlite3',
         }
     }
 else:
