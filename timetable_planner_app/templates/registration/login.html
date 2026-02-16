@@ -8,6 +8,7 @@
             <h3 class="card-title mb-3">Login</h3>
             <form method="post">
                 {% csrf_token %}
+                {% if next %}<input type="hidden" name="next" value="{{ next }}">{% endif %}
                 {{ form.as_p }}
                 <div class="form-actions">
                     <button class="btn btn-primary" type="submit">Login</button>
