@@ -28,7 +28,9 @@ from django.contrib.auth import logout as auth_logout
 
 
 def home(request):
-    return render(request, "timetable_planner_app/home.html")
+    if request.user.is_authenticated:
+        return render(request, "timetable_planner_app/home.html")
+    return render(request, "timetable_planner_app/home_public.html")
 
 
 def signup(request):
