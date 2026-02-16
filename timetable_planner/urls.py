@@ -20,7 +20,7 @@ from django.contrib.auth.views import LogoutView
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('accounts/logout/', LogoutView.as_view(template_name='registration/logged_out.html'), name='logout'),
+    path('accounts/logout/', LogoutView.as_view(template_name='timetable_planner_app/logged_out.html'), name='logout'),
     path('accounts/', include('django.contrib.auth.urls')),
     path('', include('timetable_planner_app.urls')),
 ]

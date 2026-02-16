@@ -1,0 +1,17 @@
+{% extends 'timetable_planner_app/base.html' %}
+
+{% block title %}Logged out — Timetable Planner{% endblock %}
+
+{% block content %}
+<div class="p-4 bg-light rounded">
+  <h2>You are logged out</h2>
+  <p>Thank you for using Timetable Planner. This application helps schools create and manage timetables, including teacher assignments, class schedules, and printable timetables.</p>
+  <p>If you need to log in again, click the button below.</p>
+  <p>
+    <a class="btn btn-primary" href="{% url 'login' %}?next={% url 'dashboard' %}">Log in</a>
+    <a class="btn btn-outline-secondary" href="{% url 'home' %}">Return to Home</a>
+  </p>
+  <hr>
+  <p class="text-muted small">If you were expecting a different logout page, contact your administrator.</p>
+</div>
+{% endblock %}
