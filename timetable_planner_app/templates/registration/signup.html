@@ -5,9 +5,23 @@
 </head>
 <body>
     <h1>Create an account</h1>
+    <!-- NOTE: Temporary solution for demo/testing. -->
+    <!-- TODO: Remove this when a better workflow for school creation is implemented. -->
     <form method="post">
         {% csrf_token %}
-        {{ form.as_p }}
+        <p><strong>To sign up, either select an existing school or enter details for a new school below.</strong></p>
+        {{ form.username.label_tag }} {{ form.username }}<br>
+        {{ form.first_name.label_tag }} {{ form.first_name }}<br>
+        {{ form.last_name.label_tag }} {{ form.last_name }}<br>
+        {{ form.email.label_tag }} {{ form.email }}<br>
+        {{ form.password1.label_tag }} {{ form.password1 }}<br>
+        {{ form.password2.label_tag }} {{ form.password2 }}<br>
+        <hr>
+        {{ form.school.label_tag }} {{ form.school }}<br>
+        <p><em>Or add a new school:</em></p>
+        {{ form.new_school_name.label_tag }} {{ form.new_school_name }}<br>
+        {{ form.new_school_code.label_tag }} {{ form.new_school_code }}<br>
+        {{ form.new_school_location.label_tag }} {{ form.new_school_location }}<br>
         <button type="submit">Sign up</button>
     </form>
     <p>Already have an account? <a href="{% url 'login' %}">Log in</a></p>
