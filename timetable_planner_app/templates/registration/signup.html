@@ -9,6 +9,14 @@
     <!-- TODO: Remove this when a better workflow for school creation is implemented. -->
     <form method="post">
         {% csrf_token %}
+
+        {% if form.errors %}
+            <div style="color: red;">
+                <strong>Form Errors:</strong>
+                {{ form.errors }}
+            </div>
+        {% endif %}
+
         <p><strong>To sign up, either select an existing school or enter details for a new school below.</strong></p>
         {{ form.username.label_tag }} {{ form.username }}<br>
         {{ form.first_name.label_tag }} {{ form.first_name }}<br>

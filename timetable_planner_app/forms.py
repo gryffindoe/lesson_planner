@@ -39,23 +39,21 @@ class SignUpForm(UserCreationForm):
 
         if commit:
             user.save()
+
             school = self.cleaned_data.get("school")
 
             if not school:
-                # Create new school
                 school = School.objects.create(
                     name=self.cleaned_data.get("new_school_name"),
                     code=self.cleaned_data.get("new_school_code"),
                     location=self.cleaned_data.get("new_school_location")
                 )
-            profile, created = UserProfile.objects.get_or_create(
-                user=user,
-                defaults={"school": school}
-            )
-            if not created and profile.school != school:
-                profile.school = school
-                profile.save()
 
-            # Track signup event
+            UserProfile.objects.create(
+                user=user,
+                school=school
+            )
+
 
         return user
+

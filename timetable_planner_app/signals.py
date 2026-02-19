@@ -3,8 +3,8 @@ from django.dispatch import receiver
 from django.contrib.auth.models import User
 from .models import UserProfile, School
 
-@receiver(post_save, sender=User)
-def create_profile(sender, instance, created, **kwargs):
-    if created:
-        school = School.objects.first()
-        UserProfile.objects.create(user=instance, school=school)
+# @receiver(post_save, sender=User)
+# def create_profile(sender, instance, created, **kwargs):
+#     if created:
+#         school = School.objects.first()
+#         UserProfile.objects.create(user=instance, school=school)
