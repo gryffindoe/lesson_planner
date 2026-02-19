@@ -25,13 +25,13 @@ class UserProfile(models.Model):
     def __str__(self):
         return f"{self.user.username} ({self.school})"
 
-class SignupEvent(models.Model):
-    user = models.ForeignKey(User, on_delete=models.CASCADE)
-    school = models.ForeignKey(School, on_delete=models.CASCADE)
-    timestamp = models.DateTimeField(auto_now_add=True)
+# class SignupEvent(models.Model):
+#     user = models.ForeignKey(User, on_delete=models.CASCADE)
+#     school = models.ForeignKey(School, on_delete=models.CASCADE)
+#     timestamp = models.DateTimeField(auto_now_add=True)
 
-    def __str__(self):
-        return f"Signup: {self.user.username} for {self.school.name} at {self.timestamp}"
+#     def __str__(self):
+#         return f"Signup: {self.user.username} for {self.school.name} at {self.timestamp}"
 
 
 class Teacher(models.Model):
