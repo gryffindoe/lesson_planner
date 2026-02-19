@@ -57,6 +57,5 @@ class SignUpForm(UserCreationForm):
                 profile.save()
 
             # Track signup event
-            # SignupEvent.objects.create(user=user, school=school)
 
         return user
